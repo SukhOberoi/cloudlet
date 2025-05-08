@@ -99,11 +99,13 @@ export const listItems = query({
     const files = await ctx.db
       .query("files")
       .withIndex("by_parent", (q) => q.eq("parentId", args.parentId))
+      .filter((q) => q.eq(q.field("ownerId"), userId))
       .collect();
 
     const folders = await ctx.db
       .query("folders")
       .withIndex("by_parent", (q) => q.eq("parentId", args.parentId))
+      .filter((q) => q.eq(q.field("ownerId"), userId))
       .collect();
 
     const filesWithUrls = await Promise.all(
