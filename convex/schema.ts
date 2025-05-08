@@ -11,8 +11,7 @@ const applicationTables = {
     ownerId: v.id("users"),
   })
     .index("by_parent", ["parentId"])
-    .index("by_storageId", ["storageId"])
-    .index("by_ownerId", ["ownerId"]),
+    .index("by_storageId", ["storageId"]),
 
   folders: defineTable({
     name: v.string(),
