@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { v4 as uuidv4 } from "uuid";
 
 if (!process.env.CONVEX_AWS_REGION || !process.env.CONVEX_AWS_ACCESS_KEY_ID || !process.env.CONVEX_AWS_SECRET_ACCESS_KEY) {
   throw new Error("Missing AWS configuration environment variables");
@@ -22,14 +23,19 @@ export const generateUploadUrl = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    // Generate a UUID for the file name
+    const uniqueFileName = `${uuidv4()}-${args.fileName}`;
+
     const command = new PutObjectCommand({
       Bucket: process.env.CONVEX_AWS_S3_BUCKET,
-      Key: args.fileName,
+      Key: uniqueFileName, // Use the UUID as the file name
       ContentType: args.fileType,
     });
 
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-    return uploadUrl;
+
+    // Optionally, return the unique file name along with the URL
+    return { uploadUrl, uniqueFileName };
   },
 });
 

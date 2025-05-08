@@ -48,8 +48,8 @@ function Content() {
     if (!file) return;
   
     try {
-      // Pass the required arguments to generateUploadUrl
-      const uploadUrl = await generateUploadUrl({
+      // Generate the upload URL and get the unique file name
+      const { uploadUrl, uniqueFileName } = await generateUploadUrl({
         fileName: file.name,
         fileType: file.type,
       });
@@ -64,11 +64,11 @@ function Content() {
         throw new Error("Failed to upload file to S3");
       }
   
-      // Create the file record in the database
+      // Create the file record in the database with the unique file name as storageId
       await createFile({
         name: file.name,
         size: file.size,
-        storageId: file.name, // Use the file name as the storage ID
+        storageId: uniqueFileName, // Use the unique file name as the storage ID
         parentId: currentFolder,
       });
   
