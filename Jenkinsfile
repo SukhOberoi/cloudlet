@@ -41,6 +41,26 @@ pipeline {
                 }
             }
         }
+       stage('Smoke Test') {
+            steps {
+                script {
+                    sh '''
+                    docker run --name temp-${CONTAINER_NAME} -d -p 8081:80 ${IMAGE_NAME}:${IMAGE_TAG}
+                    sleep 5 # Wait for the container to start
+                    '''
+
+                    sh '''
+                    curl -s http://localhost:8081 | grep -q "CloudLet" || (docker logs temp-${CONTAINER_NAME} && docker stop temp-${CONTAINER_NAME} && docker rm temp-${CONTAINER_NAME} && exit 1)
+                    '''
+
+                    // Stop and remove the temporary container after the test
+                    sh '''
+                    docker stop temp-${CONTAINER_NAME}
+                    docker rm temp-${CONTAINER_NAME}
+                    '''
+                }
+            }
+        }
         stage('Run New Container') {
             steps {
                 script {
