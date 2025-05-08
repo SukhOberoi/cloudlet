@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, action } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -166,20 +166,45 @@ export const listItems = query({
 // });
 
 export const deleteFile = mutation({
-  args: { fileId: v.id("files") },
+  args: { storageId: v.string() },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const file = await ctx.db.get(args.fileId);
-    if (!file || file.ownerId !== userId) {
-      throw new Error("File not found or unauthorized");
+    // Find the file in the database by storageId
+    const file = await ctx.db
+      .query("files")
+      .withIndex("by_storageId", (q) => q.eq("storageId", args.storageId))
+      .first();
+
+    if (!file) {
+      console.error("File not found in database:", {
+        userId,
+        storageId: args.storageId,
+      });
+      throw new Error("File not found");
+    }
+    
+    if (file.ownerId !== userId) {
+      console.error("Unauthorized file deletion attempt:", {
+        userId,
+        storageId: args.storageId,
+        fileOwnerId: file.ownerId,
+      });
+      throw new Error("Unauthorized");
     }
 
-    // Delete the file from S3
+    // Delete the file record from the database
+    await ctx.db.delete(file._id);
+  },
+});
+
+export const deleteFileFromS3 = action({
+  args: { storageId: v.string() },
+  handler: async (ctx, args) => {
     const deleteParams = {
       Bucket: process.env.CONVEX_AWS_S3_BUCKET,
-      Key: file.storageId, // The S3 key stored in the database
+      Key: args.storageId,
     };
 
     try {
@@ -188,9 +213,6 @@ export const deleteFile = mutation({
       console.error("Error deleting file from S3:", error);
       throw new Error("Failed to delete file from S3");
     }
-
-    // Delete the file record from the database
-    await ctx.db.delete(args.fileId);
   },
 });
 

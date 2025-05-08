@@ -9,7 +9,9 @@ const applicationTables = {
     storageId: v.string(),
     parentId: v.optional(v.union(v.id("folders"), v.null())),
     ownerId: v.id("users"),
-  }).index("by_parent", ["parentId"]),
+  })
+    .index("by_parent", ["parentId"])
+    .index("by_storageId", ["storageId"]),
 
   folders: defineTable({
     name: v.string(),

@@ -1,4 +1,4 @@
-import { Authenticated, Unauthenticated, useQuery, useMutation } from "convex/react";
+import { Authenticated, Unauthenticated, useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { SignInForm } from "./SignInForm";
 import { SignOutButton } from "./SignOutButton";
@@ -34,6 +34,7 @@ function Content() {
   const createFolder = useMutation(api.files.createFolder);
   const deleteFile = useMutation(api.files.deleteFile);
   const deleteFolder = useMutation(api.files.deleteFolder);
+  const deleteFileFromS3 = useAction(api.files.deleteFileFromS3);
 
   if (loggedInUser === undefined) {
     return (
@@ -90,7 +91,18 @@ function Content() {
       toast.error("Failed to create folder");
     }
   };
-
+  
+  const handleDeleteFile = async (file: { _id: string; storageId: string }) => {
+    try {
+      await deleteFile({ storageId: file.storageId });
+      await deleteFileFromS3({ storageId: file.storageId }); // 👈 S3 deletion after DB mutation
+      toast.success("File deleted successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete file");
+    }
+  };
+  
   return (
     <div className="flex flex-col gap-8">
       <div className="text-center">
@@ -185,7 +197,7 @@ function Content() {
                   </a>
                 )}
                 <button
-                  onClick={() => deleteFile({ fileId: file._id })}
+                  onClick={() => handleDeleteFile(file)}
                   className="text-red-500 hover:text-red-700"
                 >
                   Delete
