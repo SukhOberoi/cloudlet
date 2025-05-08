@@ -40,6 +40,7 @@ pipeline {
                     '''
                 }
             }
+        }
         stage('Run New Container') {
             steps {
                 script {
