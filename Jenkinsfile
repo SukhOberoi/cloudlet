@@ -21,7 +21,7 @@ pipeline {
                 script {
                     // Build the Docker image and pass the secret as a build argument
                     sh '''
-                    docker build \
+                    sudo docker build \
                         --build-arg VITE_CONVEX_URL=${VITE_CONVEX_URL} \
                         -t ${IMAGE_NAME}:${IMAGE_TAG} .
                     '''
@@ -34,7 +34,7 @@ pipeline {
                 script {
                     // Run the new container and pass the secret as a runtime environment variable
                     sh '''
-                    docker run -e VITE_CONVEX_URL=${VITE_CONVEX_URL} -d --name ${CONTAINER_NAME} -p 80:80 ${IMAGE_NAME}:${IMAGE_TAG}
+                    sudo docker run -e VITE_CONVEX_URL=${VITE_CONVEX_URL} -d --name ${CONTAINER_NAME} -p 80:80 ${IMAGE_NAME}:${IMAGE_TAG}
                     '''
                 }
             }
