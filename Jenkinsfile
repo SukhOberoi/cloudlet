@@ -37,7 +37,7 @@ pipeline {
                     '''
 
                     sh '''
-                    curl -s http://localhost:8081 | grep -q "CloudLet" || (docker logs temp-${CONTAINER_NAME} && docker stop temp-${CONTAINER_NAME} && docker rm temp-${CONTAINER_NAME} && exit 1)
+                    curl -s http://localhost:8081 | grep -q "<title>Cloudlet</title>" || (docker logs temp-${CONTAINER_NAME} && docker stop temp-${CONTAINER_NAME} && docker rm temp-${CONTAINER_NAME} && exit 1)
                     '''
 
                     // Stop and remove the temporary container after the test
